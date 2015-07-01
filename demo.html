@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Perlin Demo</title>
+  <style type="text/css">
+  #background {
+    background:
+      radial-gradient(ellipse at center, transparent 0%,rgba(1,53,101,0.5) 100%),
+      -webkit-canvas(background);
+    height: 300px;
+  }
+  
+  </style>
+  <script src="perlin.js"></script>
+  <script src="shaders.js"></script>
+  <script type="text/javascript">
+    
+    function debounce(func, wait, immediate) {
+      var timeout;
+      return function() {
+        var context = this, args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(function() {
+          timeout = null;
+          if (!immediate) func.apply(context, args);
+        }, wait);
+        if (immediate && !timeout) func.apply(context, args);
+      };
+    };
+    
+    function benchmark(label, func) {
+      return function () {
+        var start = Date.now();
+        func();
+        var end = Date.now();
+        
+        console.log(label + ': ' + (end - start) + 'ms');
+      };
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      
+      var benchmarkRender = benchmark('Render', resizeCanvas);
+      
+      window.addEventListener('resize', debounce(benchmarkRender, 250), false);
+      
+      benchmarkRender();
+      
+      
+      function resizeCanvas() {
+        var width = document.body.clientWidth;
+        var height = 300;
+        var ctx = document.getCSSCanvasContext('2d', 'background', width, height);
+        
+        drawTexture(ctx, width, height);
+      }
+      
+      function drawTexture(ctx, width, height) {
+        var simplex_shaders = [];
+        
+        for(var i=1; i <= 8; i++) {
+          simplex_shaders.push(shaders.simplex(Math.pow(2, i)));
+        }
+        
+        var simplex = blenders.average(simplex_shaders);
+        var constant_blue = shaders.constant([0, 174, 228, 255]);
+        
+        var blue_pattern = blenders.screen([simplex, constant_blue]);
+        
+        //var final_image = blenders.layer(shaders.grain(0.2), blue_pattern);
+        var final_image = blue_pattern;
+        
+        drawCanvas(ctx, final_image, width, height);
+      }
+      
+      function drawCanvas(ctx, shader, width, height) {
+        var image = ctx.createImageData(width, height);
+        
+        console.log(width, height)
+        
+        var data = image.data;
+        
+        for (var x = 0; x < width; x++) {
+          for (var y = 0; y < height; y++) {
+            var value = shader(x, y);
+            
+            var cell = (x + y * width) * 4;
+            
+            data[cell] = value[0]
+            data[cell + 1] = value[1];
+            data[cell + 2] = value[2];
+            data[cell + 3] = value[3];
+          }
+        }
+        
+        ctx.putImageData(image, 0, 0);
+        
+      }
+    }, false);
+  </script>
+</head>
+<body>
+  <div id="background"></div>
+</body>
+</html>
