@@ -40,11 +40,11 @@
     
     document.addEventListener('DOMContentLoaded', function() {
       
-      var benchmarkRender = benchmark('Render', resizeCanvas);
+      var benchmarkedRender = benchmark('Render', resizeCanvas);
       
-      window.addEventListener('resize', debounce(benchmarkRender, 250), false);
+      window.addEventListener('resize', debounce(benchmarkedRender, 250), false);
       
-      benchmarkRender();
+      benchmarkedRender();
       
       
       function resizeCanvas() {
